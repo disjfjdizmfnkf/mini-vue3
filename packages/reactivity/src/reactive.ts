@@ -31,7 +31,7 @@ function createReactiveObject(
   }
 
   // 如果该对象不存在proxy对象
-  const proxy = new Proxy(target, baseHandlers)
+  const proxy = new Proxy(target, baseHandlers)  // target: 被代理对象  baseHandlers: 捕获器
   // 利用哈希表缓存对象
   proxyMap.set(target, proxy)
 
