@@ -12,6 +12,13 @@ export function reactive(target: object) {
   return createReactiveObject(target, mutableHandlers, reactiveMap);
 }
 
+/**
+ *
+ * @param target
+ * @param baseHandlers
+ * @param proxyMap  使用弱引用和映射 优化内存和重复代理
+ */
+
 function createReactiveObject(
   target: object,
   baseHandlers: ProxyHandler<any>,
