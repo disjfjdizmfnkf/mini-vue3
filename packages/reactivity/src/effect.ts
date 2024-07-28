@@ -1,6 +1,7 @@
-import { createDeep, Deep } from './deep'
+import { createDeep, Dep } from './dep'
+import { isArray } from '@vue/shared'
 
-const targetMap = new WeakMap<any, Map<any, Deep>>()
+const targetMap = new WeakMap<any, Map<any, Dep>>()
 
 /**
  * 封装副作用函数/依赖收集/依赖触发
@@ -36,7 +37,7 @@ export function track(target: object, key: unknown) {
   // target->(key)Map: key->effect set
   let deepsMap = targetMap.get(target)
   if (!deepsMap) {
-    deepsMap = new Map<any, Deep>
+    deepsMap = new Map<any, Dep>
     // targetMap[target] = depsMap 键被垃圾回收时，属性赋值操作可能会导致无法预料的行为
     targetMap.set(target, deepsMap)
   }
@@ -55,7 +56,7 @@ export function track(target: object, key: unknown) {
  * 跟踪key的所有effects
  * @param dep key的effects集合
  */
-export function trackEffects(dep: Deep) {
+export function trackEffects(dep: Dep) {
   dep.add(activeEffect!)
 }
 
@@ -80,8 +81,8 @@ export function trigger(target: object, key: unknown, newValue: unknown) {
  * 以此触发dep中的依赖
  * @param dep
  */
-export function triggerEffects(dep: Deep) {
-  const effects = Array.isArray(dep) ? dep : [...dep]
+export function triggerEffects(dep: Dep) {
+  const effects = isArray(dep) ? dep : [...dep]
   for (const item of effects) {
     triggerEffect(item)
   }

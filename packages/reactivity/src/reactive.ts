@@ -1,4 +1,5 @@
 import { mutableHandlers } from './baseHandlers'
+import { isObject } from '@vue/shared'
 
 const reactiveMap = new WeakMap<object, any>
 
@@ -9,7 +10,7 @@ const reactiveMap = new WeakMap<object, any>
  * @returns 代理对象
  */
 export function reactive(target: object) {
-  return createReactiveObject(target, mutableHandlers, reactiveMap);
+  return createReactiveObject(target, mutableHandlers, reactiveMap)
 }
 
 /**
@@ -22,7 +23,7 @@ export function reactive(target: object) {
 function createReactiveObject(
   target: object,
   baseHandlers: ProxyHandler<any>,
-  proxyMap: WeakMap<object, any>
+  proxyMap: WeakMap<object, any>,
 ) {
   const existingProxy = proxyMap.get(target)
 
@@ -30,10 +31,13 @@ function createReactiveObject(
     return existingProxy
   }
 
-  // 如果该对象不存在proxy对象
+  // 如果target不存在代理对象，创建代理对象，
   const proxy = new Proxy(target, baseHandlers)  // target: 被代理对象  baseHandlers: 捕获器
   // 利用哈希表缓存对象
   proxyMap.set(target, proxy)
 
   return proxy
 }
+
+export const toReactive = <T extends unknown>(value: T): T =>
+  isObject(value) ? reactive(value as object) : value
