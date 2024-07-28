@@ -1,6 +1,7 @@
 import { createDeep, Dep } from './dep'
 import { toReactive } from './reactive'
-import { activeEffect, trackEffects } from './effect'
+import { activeEffect, trackEffects, triggerEffects } from './effect'
+import { hasChanged } from '@vue/shared'
 
 export interface Ref<T = any> {
   value: T
@@ -24,30 +25,57 @@ function createRef(rawValue: unknown, shallow: boolean) {
 
 export class RefImpl<T> {
   private _value: T
+  private _rawValue: T
+
   public dep?: Dep = undefined
-  public readonly __v_isRef = true
+
+  public readonly __v_isRef = true  // 用来区分这是一个包裹对象
 
   constructor(value: T, public readonly __v_isShallow: boolean) {
-    this._value = __v_isShallow ? value : toReactive(value)
+    this._rawValue = value  // 原始值
+    this._value = __v_isShallow ? value : toReactive(value)  // 原始值或代理对象
   }
 
 
   /**
-   * 返回的是一个reactive处理过的proxy对象
+   * 依赖收集
    */
   get value() {
     trackRefValue(this)
     return this._value
   }
 
+  /**
+   * 依赖触发
+   * @param newVal
+   */
   set value(newVal) {
-
+    if (hasChanged(newVal, this._rawValue)) {
+      this._value = toReactive(newVal)
+      this._rawValue = newVal
+      triggerRefValue(this)
+    }
   }
 }
 
+/**
+ * 依赖收集函数
+ * @param ref
+ */
 export function trackRefValue(ref: any) {
-  if (activeEffect){
+  if (activeEffect) {
     trackEffects(ref.dep || (ref.dep = createDeep()))
+  }
+}
+
+
+/**
+ * 依赖触发函数
+ * @param ref
+ */
+export function triggerRefValue(ref: any) {
+  if (ref.dep) {
+    triggerEffects(ref.dep)
   }
 }
 

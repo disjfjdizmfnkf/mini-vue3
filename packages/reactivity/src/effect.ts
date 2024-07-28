@@ -78,7 +78,7 @@ export function trigger(target: object, key: unknown, newValue: unknown) {
 }
 
 /**
- * 以此触发dep中的依赖
+ * 依次触发dep中的依赖
  * @param dep
  */
 export function triggerEffects(dep: Dep) {

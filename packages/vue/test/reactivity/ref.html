@@ -18,20 +18,18 @@
   const { ref, effect } = Vue
 
   if (ref && effect) {
-    const obj = ref({
-      age: 1,
+    const obj = ref('aaaaa')
+
+    effect(() => {
+      document.querySelector('#app1').innerText = obj.value
     })
 
     effect(() => {
-      document.querySelector('#app1').innerText = obj.value.age
-    })
-
-    effect(() => {
-      document.querySelector('#app2').innerText = obj.value.age
+      document.querySelector('#app2').innerText = obj.value
     })
 
     setTimeout(() => {
-      obj.value.age = 2
+      obj.value = 'bbbbb'
     }, 2000)
   } else {
     console.error('ref|effect error')

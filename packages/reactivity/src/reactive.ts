@@ -39,5 +39,11 @@ function createReactiveObject(
   return proxy
 }
 
+
+/**
+ * value是对象? reactive(value) : value
+ * 如果传入的值是对象就使用reactive进行响应性处理 不是直接返回
+ * @param value
+ */
 export const toReactive = <T extends unknown>(value: T): T =>
   isObject(value) ? reactive(value as object) : value
