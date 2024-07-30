@@ -9,8 +9,9 @@ export interface Ref<T = any> {
 
 /**
  * reactive依赖proxy实现对象的响应式
- * 但proxy无法代理基本数据类型对其操作进行拦截，所以使用ref来处理基本数据类型
- * 所以将其包装成类 再使用reactive实现简单数据类型的响应性
+ * 但proxy无法代理基本数据类型对其操作进行拦截
+ * 所以要在ref中对基本数据类型做一层包裹，使用属性函数拦截get和set操作
+ * 同时使用.value的方式可以解决相应丢失的问题（在模板中使用...展开运算符会得到普通对象）
  * @param value
  */
 export function ref(value?: unknown) {
@@ -38,7 +39,7 @@ export class RefImpl<T> {
 
 
   /**
-   * 依赖收集
+   * 依赖收集  属性函数
    */
   get value() {
     trackRefValue(this)
@@ -46,7 +47,7 @@ export class RefImpl<T> {
   }
 
   /**
-   * 依赖触发
+   * 依赖触发 属性函数
    * @param newVal
    */
   set value(newVal) {

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="../../dist/vue.js"></script>
+</head>
+
+<body>
+<div id="app"></div>
+</body>
+
+<script>
+  const { reactive, effect, computed } = Vue
+
+  const obj = reactive({
+    name: 'hahaha',
+  })
+
+
+  // 对obj.name进行get操作  obj.name会收集computedObj的依赖
+  const computedObj = computed(() => {
+    return `name: ${obj.name}`
+  })
+
+  // 执行computedObj.value的get操作，computedObj收集effect的依赖
+  effect(() => {
+    document.querySelector('#app').innerHTML = computedObj.value
+  })
+
+  // 对obj.name进行set操作,obj.name的依赖computedObj触发,computedObj触发->effect触发
+  setTimeout(() => {
+    obj.name = '哈哈哈'
+  }, 2000)
+
+</script>
+</html>
