@@ -1,6 +1,7 @@
 import { createDeep, Dep } from './dep'
 import { isArray } from '@vue/shared'
 import { ComputedRefImpl } from './computed'
+import { __await } from 'tslib'
 
 export type EffectScheduler = (...args: any) => any
 
@@ -93,8 +94,22 @@ export function trigger(target: object, key: unknown, newValue: unknown) {
  */
 export function triggerEffects(dep: Dep) {
   const effects = isArray(dep) ? dep : [...dep]
-  for (const item of effects) {
-    triggerEffect(item)
+  // for (const item of effects) {
+  //   triggerEffect(item)
+  // }
+
+  // 先执行计算属性的effect，之后会执行调度函数触发依赖，再执行依赖触发，中间没有computed的依赖执行（effect函数）
+  // 而改变脏位导致无线循环
+  for (const effect of effects){
+    if (effect.computed) {
+      triggerEffect(effect)
+    }
+  }
+
+  for (const effect of effects) {
+    if (!effect.computed){
+      triggerEffect(effect)
+    }
   }
 }
 

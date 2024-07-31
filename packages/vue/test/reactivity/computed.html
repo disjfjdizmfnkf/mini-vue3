@@ -22,16 +22,21 @@
 
 
   // 对obj.name进行get操作  obj.name会收集computedObj的依赖
+  /*
+   * 在这个依赖被触发时，因为是computed对象，优先会执行调度函数
+   */
   const computedObj = computed(() => {
     return `name: ${obj.name}`
   })
 
   // 执行computedObj.value的get操作，computedObj收集effect的依赖
   effect(() => {
+    // .value会触发get，如果脏位为真，执行computedObj的effect
+    document.querySelector('#app').innerHTML = computedObj.value
     document.querySelector('#app').innerHTML = computedObj.value
   })
 
-  // 对obj.name进行set操作,obj.name的依赖computedObj触发,computedObj触发->effect触发
+  // 对obj.name进行set操作,obj.name的依赖computedObj触发(触发调度),computedObj触发->effect触发
   setTimeout(() => {
     obj.name = '哈哈哈'
   }, 2000)
