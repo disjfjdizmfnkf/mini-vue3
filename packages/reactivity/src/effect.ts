@@ -1,33 +1,46 @@
 import { createDeep, Dep } from './dep'
-import { isArray } from '@vue/shared'
+import { extend, isArray } from '@vue/shared'
 import { ComputedRefImpl } from './computed'
-import { __await } from 'tslib'
 
 export type EffectScheduler = (...args: any) => any
+
+export interface ReactiveEffectOptions {
+  lazy?: boolean
+  scheduler?: EffectScheduler
+}
 
 const targetMap = new WeakMap<any, Map<any, Dep>>()
 
 /**
- * 封装副作用函数/依赖收集/依赖触发
+ * 封装副作用函数/依赖收集/依赖触发/处理options参数
  * @param fn 副作用函数
+ * @param options lazy和scheduler
  */
-export function effect<T = any>(fn: () => T) {
+export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
   const _effect = new ReactiveEffect(fn)
-  _effect.run()
+
+  // 试图在ReactiveEffect中创建options中的调度器属性
+  if (options) {
+    extend(_effect, options)
+  }
+
+  if (!options || !options.lazy) {
+    _effect.run()
+  }
 }
 
 export let activeEffect: ReactiveEffect | undefined
 
 /**
- * 封装副作用函数，方便控制和触发副作用函数
+ * 封装副作用函数并绑定到全局activeEffect，方便对副作用函数操作和触发
  */
 export class ReactiveEffect<T = any> {
   computed?: ComputedRefImpl<T>
 
   constructor(
-      public fn: () => T,
-      public scheduler: EffectScheduler | null = null
-    ) {}
+    public fn: () => T,
+    public scheduler: EffectScheduler | null = null,
+  ) {}
 
   run() {
     activeEffect = this
@@ -100,14 +113,14 @@ export function triggerEffects(dep: Dep) {
 
   // 先执行计算属性的effect，之后会执行调度函数触发依赖，再执行依赖触发，中间没有computed的依赖执行（effect函数）
   // 而改变脏位导致无线循环
-  for (const effect of effects){
+  for (const effect of effects) {
     if (effect.computed) {
       triggerEffect(effect)
     }
   }
 
   for (const effect of effects) {
-    if (!effect.computed){
+    if (!effect.computed) {
       triggerEffect(effect)
     }
   }
@@ -117,7 +130,7 @@ export function triggerEffects(dep: Dep) {
  * 触发指定依赖
  * @param effect
  */
-export function triggerEffect(effect: ReactiveEffect){
+export function triggerEffect(effect: ReactiveEffect) {
   if (effect.scheduler) {
     effect.scheduler()
   } else {
