@@ -7,12 +7,12 @@ const pendingPreFlushCbs: Function[] = []
 //Promise对象 表示当前的刷新操作
 let currentFlushPromise: Promise<void> | null = null
 
-// 已解决的promise，用于调度刷新
+// 返回已解决的promise，调度异步操作在某些任务在当前执行上下文完成之后再执行
 const resolvedPromise = Promise.resolve() as Promise<any>
 
 
 /**
- * 高阶函数，封装queueCb，传递参数
+ * 封装queueCb，作为高阶函数传递参数
  * @param cb 回调函数
  */
 export function queuePreFlushCb(cb: Function) {
@@ -51,7 +51,7 @@ function flushJobs() {
 }
 
 /**
- * 执行所有回调，清空结合
+ * 执行回调之前去重->执行所有回调->清空集合
  */
 export function flushPreFlushCbs() {
   if(pendingPreFlushCbs.length) {

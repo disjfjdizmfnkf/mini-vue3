@@ -32,7 +32,8 @@ export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
 export let activeEffect: ReactiveEffect | undefined
 
 /**
- * 封装副作用函数并绑定到全局activeEffect，方便对副作用函数操作和触发
+ * 封装副作用函数并绑定到全局activeEffect，方便对副作用函数收集和触发
+ * 有调度器的触发调度，没有的调度器直接触发effect
  */
 export class ReactiveEffect<T = any> {
   computed?: ComputedRefImpl<T>
