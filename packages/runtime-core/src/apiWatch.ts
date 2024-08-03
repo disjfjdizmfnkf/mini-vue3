@@ -24,6 +24,7 @@ export function doWatch(source: any, cb: Function, { immediate, deep }: WatchOpt
   let getter: () => any
   if (isReactive(source)) {
     getter = () => source
+    deep = true
   } else {
     getter = () => {
     }
@@ -59,16 +60,17 @@ export function doWatch(source: any, cb: Function, { immediate, deep }: WatchOpt
   } else {
     effect.run()
   }
-
-  stop()
+  return () => {
+    effect.stop()
+  }
 }
 
-function traverse(value: any, seen = new Set<object>()) {
-  if (typeof value !== 'object' || value === null || value in seen) return
+function traverse(value: unknown, seen = new Set<object>()): unknown {
+  if (typeof value !== 'object' || value === null || seen.has(value)) return value
   seen.add(value)
   // 使用for...in读取对象的每一个值
-  for (const k in value){
-    traverse(k, seen)
+  for (const k in value) {
+    traverse((value as Record<string, unknown>)[k], seen)
   }
   return value
 }

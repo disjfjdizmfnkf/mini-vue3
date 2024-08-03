@@ -45,8 +45,13 @@ export class ReactiveEffect<T = any> {
 
   run() {
     activeEffect = this
-
     return this.fn()
+  }
+
+  stop() {
+    if (activeEffect === this) {
+      activeEffect = undefined;
+    }
   }
 }
 

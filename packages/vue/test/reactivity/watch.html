@@ -14,21 +14,20 @@
 </body>
 
 <script>
-  const { reactive, effect } = Vue
+  const { reactive, watch } = Vue
 
   const obj = reactive({
     count: 1,
   })
 
-  effect(() => {
-    console.log(obj.count)
-  }, {
-    scheduler() {
-      setTimeout(() => console.log(obj.count))
-    },
+  watch(obj, (value, oldValue) => {
+    console.log('watch 监听触发')
+    console.log('value', value)
   })
 
-  obj.count = 2
+  setTimeout(()=> {
+    obj.count = 2
+  }, 2000)
 
   console.log('执行结束')
 </script>
