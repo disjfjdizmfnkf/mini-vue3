@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="../../dist/vue.js"></script>
+</head>
+<div id="app"></div>
+<body>
+
+</body>
+
+<script>
+
+  const { h, Fragment } = Vue
+  // const component = {
+  //   render(){
+  //     return h('div', 'text文本')
+  //   }
+  // }
+  /**
+   * 上面函数返回的component对象
+   * const component = {
+   *   '__v_isvnode': 'true',
+   *   'type': div,
+   *   'shapeFlags': 9,
+   *   'children': 'text文本'
+   * }
+   */
+    // const vnode2 = h(component)
+    // console.log(vnode2)
+
+    // const vnodeText = h(Text, 'text')
+    // console.log(vnodeText)
+    // const vnodeFragment = h(Fragment, 'fragment')
+    // console.log(vnodeFragment)
+    // const vnodeComment = h(Comment, 'comment')
+    // console.log(vnodeComment)
+
+
+  const VNode = h('div', {
+      class: [
+        {
+          'margin': '0',
+        },
+        {
+          'red': true,
+        }],
+    })
+  console.log(VNode)
+</script>
+</html>
