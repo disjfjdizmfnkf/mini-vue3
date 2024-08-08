@@ -8,10 +8,11 @@ export const Comment = Symbol('Comment')
 
 export interface VNode {
   __v_isVNode: true
+  el: any
   type: any
   props: any
   children: any
-  shapeFlags: ShapeFlags | number
+  shapeFlag: ShapeFlags | number
 }
 
 export function createVNode(type: any, props: any, children: any): VNode {
@@ -40,10 +41,11 @@ export function createVNode(type: any, props: any, children: any): VNode {
 function createBaseVNode(type: any, props: any, children: any, shapeFlags: ShapeFlags | number): VNode {
   const vnode: VNode = {
     __v_isVNode: true,
+    el: null,
     type,
     props,
     children,
-    shapeFlags,
+    shapeFlag: shapeFlags,
   }
   normalizeChildren(vnode, children)
   return vnode
@@ -52,7 +54,7 @@ function createBaseVNode(type: any, props: any, children: any, shapeFlags: Shape
 function normalizeChildren(vnode: VNode, children: any) {
   let type = 0
 
-  // const { shapeFlags } = vnode
+  // const { shapeFlag } = vnode
 
   if (children == null) {
   } else if (isArray(children)) {
@@ -68,7 +70,7 @@ function normalizeChildren(vnode: VNode, children: any) {
   vnode.children = children
   // 按位或运算符将type的标志位合并到vnode.shapeFlags中，最终包括VNode的类型例如元素节点、
   // 函数组件、有状态组件等）以及其子节点的类型（例如文本子节点、数组子节点、插槽子节点等）
-  vnode.shapeFlags |= type
+  vnode.shapeFlag |= type
 }
 
 export function isVNode(value: any): value is VNode {
