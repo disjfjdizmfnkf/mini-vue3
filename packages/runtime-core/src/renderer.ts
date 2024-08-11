@@ -6,9 +6,9 @@ export interface RendererOptions {
 
   setElementText(node: Element, text: string): void
 
-  inset(el: Element, parent: Element, anchor?: Element): void
+  insert(el: Element, parent: Element, anchor?: Element): void
 
-  creatElement(type: string): Element
+  createElement(type: string): Element
 }
 
 
@@ -16,13 +16,13 @@ export function createRenderer(options: RendererOptions) {
   return baseCreateRenderer(options)
 }
 
-function baseCreateRenderer(options: RendererOptions): any {
+function baseCreateRenderer (options: RendererOptions): any {
 
   const {
     patchProp: hostPatchProp,
     setElementText: hostSetElementText,
-    inset: hostInsert,
-    creatElement: hostCreateElement,
+    insert: hostInsert,
+    createElement: hostCreateElement,
   } = options
 
   function processElement(oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) {
@@ -55,7 +55,7 @@ function baseCreateRenderer(options: RendererOptions): any {
   }
 
 
-  const patch = (oldVNode: VNode, newVNode: VNode, container: Element, anchor?: Element) => {
+  const patch = (oldVNode: VNode, newVNode: VNode, container: Element, anchor = null) => {
     if (oldVNode === newVNode) return
 
     const { type, shapeFlag } = newVNode
@@ -69,7 +69,7 @@ function baseCreateRenderer(options: RendererOptions): any {
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {  // 是元素节点
-          processElement(oldVNode, newVNode, container, anchor as Element)
+          processElement(oldVNode, newVNode, container, anchor as any)
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {  // 是组件
           // processComponent(oldVNode, newVNode, container)
         }

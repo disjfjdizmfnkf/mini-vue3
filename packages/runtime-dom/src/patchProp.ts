@@ -8,7 +8,7 @@ import { patchClass } from './modules/class'
  * @param prevValue
  * @param nextValue
  */
-export function patchProp(el: Element, key: string, prevValue: any, nextValue: any) {
+export const patchProp = (el: Element, key: string, prevValue: any, nextValue: any) => {
   if (key === 'class') {
     patchClass(el, nextValue)
   } else if (key === 'style') {

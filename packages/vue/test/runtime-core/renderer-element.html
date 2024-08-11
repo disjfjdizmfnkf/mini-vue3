@@ -10,14 +10,15 @@
 </head>
 
 <body>
-
+<div id="app"></div>
 </body>
 
 <script>
-  const { h } = Vue
+  const { h, render } = Vue
+
   const vNode = h('div', {
     class: 'test',
   }, 'hello')
-  console.log(vNode)
+  render(vNode, document.querySelector('#app'))
 </script>
 </html>
