@@ -12,7 +12,7 @@ export interface VNode {
   type: any
   props: any
   children: any
-  shapeFlag: ShapeFlags | number
+  shapeFlag: ShapeFlags
 }
 
 export function createVNode(type: any, props: any, children: any): VNode {

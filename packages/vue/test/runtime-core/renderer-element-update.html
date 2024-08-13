@@ -7,18 +7,36 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
   <script src="../../dist/vue.js"></script>
+  <style>
+    .test {
+      color: blue;
+    }
+    .active {
+        color: purple;
+    }
+  </style>
 </head>
 
 <body>
-<div id="app"></div>
+<div id="app" style="font-size: 25px"></div>
 </body>
 
 <script>
   const { h, render } = Vue
-  console.log(render)
+
   const vNode = h('div', {
     class: 'test',
   }, 'hello')
+
   render(vNode, document.querySelector('#app'))
+
+  setTimeout(() => {
+    const vNode = h('div', {
+      class: 'active',
+    }, 'hello')
+    console.log('update')
+    render(vNode, document.querySelector('#app'))
+  }, 2000)
+
 </script>
 </html>
