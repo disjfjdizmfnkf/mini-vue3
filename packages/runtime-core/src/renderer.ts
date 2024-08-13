@@ -1,5 +1,5 @@
 import { ShapeFlags } from '../../shared/src/shapeFlags'
-import { Comment, Fragment, Text, VNode } from './vnode'
+import { Comment, Text, Fragment, VNode } from './vnode'
 import { EMPTY_OBJ } from '@vue/shared'
 
 export interface RendererOptions {
@@ -17,7 +17,7 @@ export function createRenderer(options: RendererOptions) {
   return baseCreateRenderer(options)
 }
 
-function baseCreateRenderer(options: RendererOptions): any {
+function baseCreateRenderer (options: RendererOptions): any {
 
   const {
     patchProp: hostPatchProp,
@@ -126,42 +126,42 @@ function baseCreateRenderer(options: RendererOptions): any {
         }
       }
     }
+  }
 
+  const patch = (oldVNode: VNode, newVNode: VNode, container: Element, anchor = null) => {
+    if (oldVNode === newVNode) return
 
-    const patch = (oldVNode: VNode, newVNode: VNode, container: Element, anchor = null) => {
-      if (oldVNode === newVNode) return
+    const { type, shapeFlag } = newVNode
 
-      const { type, shapeFlag } = newVNode
-
-      switch (type) { // 根据节点类型进行不同的处理
-        case Text:
-          break
-        case Comment:
-          break
-        case Fragment:
-          break
-        default:
-          if (shapeFlag & ShapeFlags.ELEMENT) {  // 是元素节点
-            processElement(oldVNode, newVNode, container, anchor as any)
-          } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {  // 是组件
-            // processComponent(oldVNode, newVNode, container)
-          }
-      }
-    }
-
-    const render = (vnode: VNode, container: any) => {
-      // 如果 vnode 为 null，则卸载 container._vnode
-      if (vnode == null) {
-        if (container._vnode) {
-          // unmount(container._vnode, null, null, true)
+    switch (type) { // 根据节点类型进行不同的处理
+      case Text:
+        break
+      case Comment:
+        break
+      case Fragment:
+        break
+      default:
+        if (shapeFlag & ShapeFlags.ELEMENT) {  // 是元素节点
+          processElement(oldVNode, newVNode, container, anchor as any)
+        } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {  // 是组件
+          // processComponent(oldVNode, newVNode, container)
         }
-      } else {
-        patch(container._vnode || null, vnode, container)
-      }
-      container._vnode = vnode
-    }
-    return {
-      render,
     }
   }
+
+  const render = (vnode: VNode, container: any) => {
+    // 如果 vnode 为 null，则卸载 container._vnode
+    if (vnode == null) {
+      if (container._vnode) {
+        // unmount(container._vnode, null, null, true)
+      }
+    } else {
+      patch(container._vnode || null, vnode, container)
+    }
+    container._vnode = vnode
+  }
+  return {
+    render,
+  }
+
 }
