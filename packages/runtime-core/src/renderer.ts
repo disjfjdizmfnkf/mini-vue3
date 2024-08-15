@@ -1,5 +1,5 @@
 import { ShapeFlags } from '../../shared/src/shapeFlags'
-import { Comment, Text, Fragment, VNode } from './vnode'
+import { Comment, Text, Fragment, VNode, isSameVNodeType } from './vnode'
 import { EMPTY_OBJ } from '@vue/shared'
 
 export interface RendererOptions {
@@ -10,6 +10,8 @@ export interface RendererOptions {
   insert(el: Element, parent: Element, anchor?: Element): void
 
   createElement(type: string): Element
+
+  remove(el: Element): void
 }
 
 
@@ -17,13 +19,14 @@ export function createRenderer(options: RendererOptions) {
   return baseCreateRenderer(options)
 }
 
-function baseCreateRenderer (options: RendererOptions): any {
+function baseCreateRenderer(options: RendererOptions): any {
 
   const {
     patchProp: hostPatchProp,
     setElementText: hostSetElementText,
     insert: hostInsert,
     createElement: hostCreateElement,
+    remove: hostRemove,
   } = options
 
   function processElement(oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) {
@@ -128,8 +131,12 @@ function baseCreateRenderer (options: RendererOptions): any {
     }
   }
 
-  const patch = (oldVNode: VNode, newVNode: VNode, container: Element, anchor = null) => {
+  const patch = (oldVNode: VNode | null, newVNode: VNode, container: Element, anchor = null) => {
     if (oldVNode === newVNode) return
+    if (oldVNode && !isSameVNodeType(oldVNode, newVNode)) {
+      unmount(oldVNode)
+      oldVNode = null  // 为了下面调用processElement时直接执行挂载
+    }
 
     const { type, shapeFlag } = newVNode
 
@@ -142,23 +149,27 @@ function baseCreateRenderer (options: RendererOptions): any {
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {  // 是元素节点
-          processElement(oldVNode, newVNode, container, anchor as any)
+          processElement(oldVNode as any, newVNode, container, anchor as any)
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {  // 是组件
           // processComponent(oldVNode, newVNode, container)
         }
     }
   }
 
+  const unmount = (vnode: VNode) => {
+    hostRemove(vnode.el)
+  }
+
   const render = (vnode: VNode, container: any) => {
     // 如果 vnode 为 null，则卸载 container._vnode
-    if (vnode == null) {
-      if (container._vnode) {
-        // unmount(container._vnode, null, null, true)
+    if (vnode == null) {  //新的vnode为null
+      if (container._vnode) { // 且旧的vnode存在
+        unmount(container._vnode)
       }
     } else {
       patch(container._vnode || null, vnode, container)
     }
-    container._vnode = vnode
+    container._vnode = vnode  // 保存vnode,之后调用时都是旧的vnode
   }
   return {
     render,
