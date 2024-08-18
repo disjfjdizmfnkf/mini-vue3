@@ -1,6 +1,7 @@
 import { ShapeFlags } from '../../shared/src/shapeFlags'
 import { Comment, Text, Fragment, VNode, isSameVNodeType } from './vnode'
-import { EMPTY_OBJ } from '@vue/shared'
+import { EMPTY_OBJ, isString } from '@vue/shared'
+import { normalizeVNode } from './componentRenderUtils'
 
 export interface RendererOptions {
   patchProp(el: Element, key: string, prevValue: any, nextValue: any): void
@@ -12,6 +13,12 @@ export interface RendererOptions {
   createElement(type: string): Element
 
   remove(el: Element): void
+
+  createText(text: string): Text
+
+  setText(node: Element, text: string): void
+
+  createComment(text: string): Comment
 }
 
 
@@ -20,16 +27,60 @@ export function createRenderer(options: RendererOptions) {
 }
 
 function baseCreateRenderer(options: RendererOptions): any {
-
+  /**
+   * 解构 options，获取所有的兼容性方法
+   */
   const {
     patchProp: hostPatchProp,
     setElementText: hostSetElementText,
     insert: hostInsert,
     createElement: hostCreateElement,
     remove: hostRemove,
+    createText: hostCreateText,
+    setText: hostSetText,
+    createComment: hostCreateComment,
   } = options
 
-  function processElement(oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) {
+  // Fragment 的打补丁操作
+  const processFragment = (oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) => {
+    if (!oldVNode) {
+      // 如果旧的VNode不存在 逐个挂载fragment的子节点
+      mountChildren(newVNode.children, container, anchor)
+    } else {
+      patchChildren(oldVNode, newVNode, container, anchor)
+    }
+  }
+
+  // comment 的打补丁操作
+  const processCommentNode = (oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) => {
+    if (oldVNode) {
+      oldVNode.el = newVNode.el
+    } else {
+      newVNode.el = hostCreateComment(newVNode.children as string)
+      hostInsert(newVNode.el, container, anchor)
+    }
+  }
+
+  // Text 的打补丁操作
+  const processText = (oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) => {
+    // 不存在旧的节点，则为 挂载 操作
+    if (oldVNode == null) {
+      // 生成节点
+      newVNode.el = hostCreateText(newVNode.children as string)
+      // 挂载
+      hostInsert(newVNode.el, container, anchor)
+    }
+    // 存在旧的节点，则为 更新 操作
+    else {
+      const el = (newVNode.el = oldVNode.el!)
+      if (newVNode.children !== oldVNode.children) {
+        hostSetText(el, newVNode.children as string)
+      }
+    }
+  }
+
+  // 元素节点 Element 的打补丁操作
+  const processElement = (oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) => {
     if (!oldVNode) {
       // 挂载元素节点
       mountElement(newVNode, container, anchor)
@@ -38,6 +89,7 @@ function baseCreateRenderer(options: RendererOptions): any {
       patchElement(oldVNode, newVNode)
     }
   }
+
 
   // 挂载元素节点 1.创建 2.设置文本子节点 3.设置props 4.插入
   const mountElement = (vnode: VNode, container: Element, anchor: Element) => {
@@ -61,6 +113,19 @@ function baseCreateRenderer(options: RendererOptions): any {
     hostInsert(el, container, anchor)
   }
 
+  // 挂载子节点
+  const mountChildren = (children: any, container: Element, anchor: any) => {
+    // 处理 Cannot assign to read only property '0' of string 'xxx'
+    if (isString(children)) {
+      children = children.split('')
+    }
+    for (let i = 0; i < children.length; i++) {
+      const child = (children[i] = normalizeVNode(children[i]))
+      patch(null, child, container, anchor)
+    }
+  }
+
+  // 更新元素节点
   const patchElement = (oldVNode: VNode, newVNode: VNode) => {
     const el = (newVNode.el = oldVNode.el)
     const oldProps = oldVNode.props || EMPTY_OBJ
@@ -142,10 +207,13 @@ function baseCreateRenderer(options: RendererOptions): any {
 
     switch (type) { // 根据节点类型进行不同的处理
       case Text:
+        processText(oldVNode as any, newVNode, container, anchor as any)
         break
       case Comment:
+        processCommentNode(oldVNode as any, newVNode, container, anchor as any)
         break
       case Fragment:
+        processFragment(oldVNode as any, newVNode, container, anchor as any)
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {  // 是元素节点

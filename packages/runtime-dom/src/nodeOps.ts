@@ -16,5 +16,12 @@ export const nodeOps = {
     if (parent) {
       parent.removeChild(child)
     }
-  }
+  },
+  createText: (text: string) => doc.createTextNode(text),
+  setText(node: Element, text: string) {
+    if (node) {
+      node.nodeValue = text
+    }
+  },
+  createComment: (text: string) => doc.createComment(text)
 }

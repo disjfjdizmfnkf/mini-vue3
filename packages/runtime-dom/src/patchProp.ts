@@ -3,6 +3,7 @@ import { patchClass } from './modules/class'
 import { patchDOMProp } from './modules/props'
 import { patchAttr } from './modules/attrs'
 import { patchStyle } from './modules/style'
+import { patchEvent } from './modules/event'
 
 /**
  * Props除了定义组件时在父组件中传递的属性外，还包括class、style、事件处理器、自定义的函数v-等
@@ -17,10 +18,13 @@ export const patchProp = (el: Element, key: string, prevValue: any, nextValue: a
   } else if (key === 'style') {
     patchStyle(el, prevValue, nextValue)
   } else if (isOn(key)) {
-    // patchEvent(el, key.slice(2).toLowerCase(), prevValue as EventListener, nextValue as EventListener)
+    // 事件
+    patchEvent(el, key, prevValue, nextValue)
   } else if (shouldSetAsProp(el, key)) {
+    //通过 DOM Properties 指定属性
     patchDOMProp(el, key, nextValue)
   } else {
+    // 其它属性
     patchAttr(el, key, nextValue)
   }
 }
