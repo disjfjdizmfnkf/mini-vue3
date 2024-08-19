@@ -52,6 +52,7 @@ function flushJobs() {
 
 /**
  * 执行回调之前去重->执行所有回调->清空集合
+ * 这样实现了将多次状态变化可以合并为一次更新
  */
 export function flushPreFlushCbs() {
   if(pendingPreFlushCbs.length) {

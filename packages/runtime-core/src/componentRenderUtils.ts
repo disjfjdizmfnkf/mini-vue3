@@ -1,4 +1,22 @@
 import { createVNode, Text } from './vnode'
+import { ShapeFlags } from '../../shared/src/shapeFlags'
+
+
+export function renderComponentRoot(instance: any) {
+  const { vnode, render } = instance
+
+  let result
+
+  try {
+    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+      result = normalizeVNode(render!())
+    }
+  } catch (error) {
+    console.error(error)
+  }
+
+  return result
+}
 
 /**
  * 确保所有子节点都是VNode结构

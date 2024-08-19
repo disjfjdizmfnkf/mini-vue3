@@ -1,7 +1,10 @@
 import { ShapeFlags } from '../../shared/src/shapeFlags'
 import { Comment, Text, Fragment, VNode, isSameVNodeType } from './vnode'
 import { EMPTY_OBJ, isString } from '@vue/shared'
-import { normalizeVNode } from './componentRenderUtils'
+import { normalizeVNode, renderComponentRoot } from './componentRenderUtils'
+import { createComponentInstance, setupComponent } from './component'
+import { ReactiveEffect } from '../../reactivity/src/effect'
+import { queuePreFlushCb } from './scheduler'
 
 export interface RendererOptions {
   patchProp(el: Element, key: string, prevValue: any, nextValue: any): void
@@ -88,6 +91,57 @@ function baseCreateRenderer(options: RendererOptions): any {
       // 更新元素节点
       patchElement(oldVNode, newVNode)
     }
+  }
+
+  // 组件的打补丁操作
+  const processComponent = (oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) => {
+    if (oldVNode == null) {
+      // 挂载
+      mountComponent(newVNode, container, anchor)
+    } else {
+      // 更新
+      // updateComponent(oldVNode, newVNode, container)
+    }
+  }
+
+
+  // 挂载组件
+  const mountComponent = (initialVNode: any, container: Element, anchor: Element) => {
+    // 生成组件实例
+    initialVNode.component = createComponentInstance(initialVNode)
+    const instance = initialVNode.component
+
+    // 标准化组件实例数据,绑定render函数
+    setupComponent(instance)
+
+    // 设置组件渲染
+    setupRenderEffect(instance, initialVNode, container, anchor)
+  }
+
+  const setupRenderEffect = (instance: any, initialVNode: any, container: Element, anchor: Element) => {
+    // 组件挂载和更新的方法
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        const subTree = (instance.subTree = renderComponentRoot(instance))
+
+        patch(null, subTree, container, anchor as any)
+
+        initialVNode.el = subTree.el
+      } else {
+
+      }
+    }
+
+    // 创建包含 scheduler 的 effect 实例
+    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn,
+        () => queuePreFlushCb(update))
+    )
+
+    // 使用update包装effect的run方法，同时绑定到instance
+    const update = (instance.update = () => effect.run())
+
+    // 触发update，等同于触发componentUpdateFn
+    update()
   }
 
 
@@ -219,7 +273,7 @@ function baseCreateRenderer(options: RendererOptions): any {
         if (shapeFlag & ShapeFlags.ELEMENT) {  // 是元素节点
           processElement(oldVNode as any, newVNode, container, anchor as any)
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {  // 是组件
-          // processComponent(oldVNode, newVNode, container)
+          processComponent(oldVNode as any, newVNode, container, anchor as any)
         }
     }
   }
