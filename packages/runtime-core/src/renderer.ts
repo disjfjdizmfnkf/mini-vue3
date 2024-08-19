@@ -93,14 +93,11 @@ function baseCreateRenderer(options: RendererOptions): any {
     }
   }
 
-  // 组件的打补丁操作
+  // 组件component 的打补丁操作
   const processComponent = (oldVNode: VNode, newVNode: VNode, container: Element, anchor: Element) => {
     if (oldVNode == null) {
       // 挂载
       mountComponent(newVNode, container, anchor)
-    } else {
-      // 更新
-      // updateComponent(oldVNode, newVNode, container)
     }
   }
 

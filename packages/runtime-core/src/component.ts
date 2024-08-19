@@ -1,4 +1,6 @@
 import { VNode } from './vnode'
+import { isObject } from '@vue/shared'
+import { reactive } from '@vue/reactivity'
 
 let uid = 0
 
@@ -31,4 +33,19 @@ export function finishComponentSetup(instance: any) {
   const Component = instance.type
 
   instance.render = Component.render
+
+  // 改变 options 中的 this 指向
+  applyOptions(instance)
+}
+
+function applyOptions(instance: any) {
+  const { data: dataOptions } = instance.type
+
+  if (dataOptions){
+    const data = dataOptions()
+    if (isObject(data)) {
+      // 将data转换为proxy
+      instance.data = reactive(data)
+    }
+  }
 }
