@@ -1,5 +1,5 @@
 import { VNode } from './vnode'
-import { isObject } from '@vue/shared'
+import { isFunction, isObject } from '@vue/shared'
 import { reactive } from '@vue/reactivity'
 import { onBeforeMount, onMounted } from './apiLifecycle'
 
@@ -44,13 +44,32 @@ export function setupComponent(instance: any) {
 }
 
 function setupStatefulComponent(instance: any) {
+  const Component = instance.type
+  // 判断是setupAPI还是compositionAPI
+  const { setup } = Component
+  if (setup) {
+    const setupResult = setup()
+    handleSetupResult(instance, setupResult)
+  } else {
+    finishComponentSetup(instance)
+  }
+}
+
+export function handleSetupResult(instance: any, setupResult: any) {
+  // 存在 setupResult，并且它是一个函数，则 setupResult 就是需要渲染的 render
+  if (isFunction(setupResult)) {
+    instance.render = setupResult
+  }
   finishComponentSetup(instance)
 }
 
 export function finishComponentSetup(instance: any) {
   const Component = instance.type
-
-  instance.render = Component.render
+  if (!instance.render) {
+    if (Component.render) {
+      instance.render = Component.render
+    }
+  }
 
   // 改变 options 中的 this 指向
   applyOptions(instance)
