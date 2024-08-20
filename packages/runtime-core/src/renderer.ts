@@ -119,11 +119,18 @@ function baseCreateRenderer(options: RendererOptions): any {
     // 组件挂载和更新的方法
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
+        const { bm, m } = instance  // 解构出hooks
+        if (bm) {
+          bm()
+        }
         const subTree = (instance.subTree = renderComponentRoot(instance))
-
         patch(null, subTree, container, anchor as any)
-
+        if (m) {
+          m()
+        }
+        // 把组件根节点的 el，作为组件的 el
         initialVNode.el = subTree.el
+        instance.isMounted = true
       } else {
 
       }
