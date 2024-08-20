@@ -13,10 +13,7 @@ export function injectHook(
 ): Function | undefined {
 	// 将 hook 注册到 组件实例中
 	if (target) {
-		if (!target[type]) {
-			target[type] = []
-		}
-		target[type].push(hook)
+		target[type] = hook
 		return hook
 	}
 }

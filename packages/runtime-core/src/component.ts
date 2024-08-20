@@ -74,10 +74,11 @@ function applyOptions(instance: any) {
 
   // 创建的前的hooks，解构出beforeCreate之后直接通过callHook调用
   if (beforeCreate) {
-    callHook(beforeCreate)
+    callHook(beforeCreate, instance.data)
   }
 
   if (dataOptions) {
+    // 触发 dataOptions 函数，拿到 data 对象
     const data = dataOptions()
     if (isObject(data)) {
       // 将data转换为proxy
@@ -87,11 +88,11 @@ function applyOptions(instance: any) {
 
   // 创建后的hooks，解构出created之后直接通过callHook调用
   if (created) {
-    callHook(created)
+    callHook(created, instance.data)
   }
 
   function registerLifecycleHook(register: Function, hook?: Function) {
-    register(hook, instance)
+    register(hook?.bind(instance.data), instance)
   }
 
   // 注册与挂载相关的hooks  也就是将hook函数挂载到组件实例中(bm, m), 之后在挂载时(render)调用
@@ -102,6 +103,7 @@ function applyOptions(instance: any) {
 /**
  * 触发 hooks
  */
-function callHook(hook: Function) {
-  hook()
+function callHook(hook: Function, proxy: any) {
+  // 使用bind改变this指向，以使得在与create相关的hook中可以使用响应式对象
+  hook.bind(proxy)()
 }

@@ -123,7 +123,9 @@ function baseCreateRenderer(options: RendererOptions): any {
         if (bm) {
           bm()
         }
+        // 从 render 中获取需要渲染的内容
         const subTree = (instance.subTree = renderComponentRoot(instance))
+        // 通过patch对subTree打补丁
         patch(null, subTree, container, anchor as any)
         if (m) {
           m()
@@ -137,8 +139,9 @@ function baseCreateRenderer(options: RendererOptions): any {
     }
 
     // 创建包含 scheduler 的 effect 实例
-    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn,
-        () => queuePreFlushCb(update))
+    const effect = (
+      instance.effect = new ReactiveEffect
+      (componentUpdateFn, () => queuePreFlushCb(update))
     )
 
     // 使用update包装effect的run方法，同时绑定到instance
