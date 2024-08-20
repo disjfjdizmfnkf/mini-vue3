@@ -115,6 +115,9 @@ function baseCreateRenderer(options: RendererOptions): any {
     setupRenderEffect(instance, initialVNode, container, anchor)
   }
 
+  /**
+   *  设置组件渲染
+   */
   const setupRenderEffect = (instance: any, initialVNode: any, container: Element, anchor: Element) => {
     // 组件挂载和更新的方法
     const componentUpdateFn = () => {
@@ -134,7 +137,23 @@ function baseCreateRenderer(options: RendererOptions): any {
         initialVNode.el = subTree.el
         instance.isMounted = true
       } else {
+        let { next, vnode } = instance
+        if (!next) {
+          next = vnode
+        }
 
+        // 获取下一次的 subTree
+        const nextTree = renderComponentRoot(instance)
+
+        // 保存对应的 subTree，以便进行更新操作
+        const prevTree = instance.subTree
+        instance.subTree = nextTree
+
+        // 通过 patch 进行更新操作
+        patch(prevTree, nextTree, container, anchor as any)
+
+        // 更新 next
+        next.el = nextTree.el
       }
     }
 

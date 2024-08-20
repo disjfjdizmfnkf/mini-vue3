@@ -28,7 +28,7 @@ export const createHook = (lifecycle: LifecycleHooks) => {
 }
 
 
-// 创建不同类型的register函数 不会报错
+// 创建不同类型的register函数
 export const onBeforeMount = createHook(<LifecycleHooks>'bm')
 export const onMounted = createHook(<LifecycleHooks>'m')
 
