@@ -7,15 +7,15 @@ import { LifecycleHooks } from './component'
  * @param target 组件实例
  */
 export function injectHook(
-	type: LifecycleHooks,
-	hook: Function,
-	target: any
+  type: LifecycleHooks,
+  hook: Function,
+  target: any,
 ): Function | undefined {
-	// 将 hook 注册到 组件实例中
-	if (target) {
-		target[type] = hook
-		return hook
-	}
+  // 将 hook 注册到 组件实例中
+  if (target) {
+    target[type] = hook
+    return hook
+  }
 }
 
 /**
@@ -24,9 +24,14 @@ export function injectHook(
  * @returns 注册 hook 的方法
  */
 export const createHook = (lifecycle: LifecycleHooks) => {
-	return (hook: Function, target: any) => injectHook(lifecycle, hook, target)
+  return (hook: Function, target: any) => injectHook(lifecycle, hook, target)
 }
 
-// 创建不同类型的register函数
-export const onBeforeMount = createHook(LifecycleHooks.BEFORE_MOUNT)
-export const onMounted = createHook(LifecycleHooks.MOUNTED)
+
+// 创建不同类型的register函数 不会报错
+export const onBeforeMount = createHook(<LifecycleHooks>'bm')
+export const onMounted = createHook(<LifecycleHooks>'m')
+
+// 报错 TypeError: Cannot read properties of undefined (reading 'BEFORE_CREATE')
+// export const onBeforeMount = createHook(LifecycleHooks.BEFORE_MOUNT)
+// export const onMounted = createHook(LifecycleHooks.MOUNTED)
