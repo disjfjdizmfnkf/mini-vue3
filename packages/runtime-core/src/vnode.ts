@@ -47,7 +47,7 @@ function createBaseVNode(type: any, props: any, children: any, shapeFlags: Shape
     props,
     children,
     shapeFlag: shapeFlags,
-    key: props && props.key
+    key: props?.key || null
   }
   normalizeChildren(vnode, children)
   return vnode

@@ -1,35 +1,51 @@
 {
   "compilerOptions": {
+    // 设置快捷导入
     "baseUrl": ".",
-    "outDir": "temp",
-
+    // 将编译后的文件输出到指定目录
+    // "outDir": "temp",
+    // 是否生成map文件，源代码映射
     "sourceMap": false,
-    // js语言版本
+    // 生成的js文件的目标版本
     "target": "es2016",
+    // 换行符
     "newLine": "LF",
+    // 是否允许编译javascript文件
     "useDefineForClassFields": false,
+    // 生成的代码将使用最新的 ECMAScript 模块语法（如 import 和 export）
     "module": "esnext",
     "moduleResolution": "bundler",
+    // 是否允许编译javascript文件
     "allowJs": true,
+    // 严格模式
     "strict": true,
-    //
+    // 不允许没有使用的局部变量
     "noUnusedLocals": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    // 转换为 JavaScript 时从 TypeScript 文件中删除所有注释。
     "removeComments": false,
-    "jsx": "preserve",
-    "lib": ["es2016", "dom"],
-    "types": ["vitest/globals", "puppeteer", "node"],
+    "lib": [
+      "es2016",
+      "dom"
+    ],
+    "types": [
+      "vitest/globals",
+      "puppeteer",
+      "node"
+    ],
     "rootDir": ".",
     "paths": {
-      "@vue/*": ["packages/*/src"],
-      "vue": ["packages/vue/src"]
+      "@vue/*": [
+        "packages/*/src"
+      ]
     }
   },
+  // 入口
   "include": [
-    "packages/*/src",
-  ],
+    "packages/*/src"
+  ]
 }

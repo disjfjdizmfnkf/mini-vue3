@@ -180,10 +180,14 @@ function baseCreateRenderer(options: RendererOptions): any {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       // 2.设置文本子节点
       hostSetElementText(el, vnode.children as string)
+    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      // 设置 Array 子节点
+      mountChildren(vnode.children, el, anchor)
     }
 
     // 3.设置props
     if (props) {
+      // 遍历 props 对象
       for (const key in props) {
         hostPatchProp(el, key, null, props[key])
       }
@@ -207,7 +211,7 @@ function baseCreateRenderer(options: RendererOptions): any {
 
   // 更新元素节点
   const patchElement = (oldVNode: VNode, newVNode: VNode) => {
-    const el = (newVNode.el = oldVNode.el)
+    const el = (newVNode.el = oldVNode.el!)
     const oldProps = oldVNode.props || EMPTY_OBJ
     const newProps = newVNode.props || EMPTY_OBJ
 
@@ -224,13 +228,15 @@ function baseCreateRenderer(options: RendererOptions): any {
     const c2 = newVNode && newVNode.children
     const { shapeFlag } = newVNode
 
-    // 新子节点是文本，旧子节点1.2.   新子节点是数组，子节点1.2.
+    // 新子节点是文本，旧子节点是(数组/文本)  新子节点是数组，旧子节点是(数组/文本) 4种情况
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       if (preShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         // TODO: 移除旧的子节点
         // unmountChildren(c1, container, anchor)
       }
       if (c2 !== c1) {
+        // 调试日志
+        console.log('container:', container, c2, c1)
         // 挂载新子节点的文本
         hostSetElementText(container, c2 as string)
       }
@@ -238,6 +244,7 @@ function baseCreateRenderer(options: RendererOptions): any {
       if (preShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // TODO: diff
+          patchKeyedChildren(c1, c2, container, anchor)
         } else {
           // TODO: 移除旧的子节点
         }
@@ -250,6 +257,34 @@ function baseCreateRenderer(options: RendererOptions): any {
           // TODO: 新子节点的挂载
         }
       }
+    }
+  }
+
+  // diff 算法
+  const patchKeyedChildren = (oldChildren: Array<any>, newChildren: Array<any>, container: Element, parentAnchor: any) => {
+
+    let i = 0
+    // 新的子节点的长度
+    const newChildrenLength = newChildren.length
+    // 旧数组最大索引
+    let oldChildrenEnd = oldChildren.length - 1
+    // 新数组最大索引
+    let newChildrenEnd = newChildrenLength - 1
+
+    // 1. 从前向后的 diff 对比。经过该循环之后，从前开始的相同 vnode 将被处理
+    while (i <= oldChildrenEnd && i <= newChildrenEnd) {
+      const oldVNode = oldChildren[i]
+      const newVNode = normalizeVNode(newChildren[i])
+      // 如果 oldVNode 和 newVNode 被认为是同一个 vnode，则直接 patch 即可
+      if (isSameVNodeType(oldVNode, newVNode)) {
+        patch(oldVNode, newVNode, container, null)
+      }
+      // 如果不被认为是同一个 vnode，则直接跳出循环
+      else {
+        break
+      }
+      // 下标自增
+      i++
     }
   }
 
@@ -276,6 +311,14 @@ function baseCreateRenderer(options: RendererOptions): any {
     }
   }
 
+  /** patch
+   * 新节点和旧节点相同，直接返回
+   * 新旧节点不同，且旧节点存在，卸载旧节点，更具新节点类型进行挂载
+   * @param oldVNode
+   * @param newVNode
+   * @param container
+   * @param anchor
+   */
   const patch = (oldVNode: VNode | null, newVNode: VNode, container: Element, anchor = null) => {
     if (oldVNode === newVNode) return
     if (oldVNode && !isSameVNodeType(oldVNode, newVNode)) {
@@ -315,6 +358,7 @@ function baseCreateRenderer(options: RendererOptions): any {
         unmount(container._vnode)
       }
     } else {
+      // 打补丁（挂载和更新）
       patch(container._vnode || null, vnode, container)
     }
     container._vnode = vnode  // 保存vnode,之后调用时都是旧的vnode
