@@ -1,4 +1,5 @@
 import { isString } from '@vue/shared'
+import { CREATE_ELEMENT_VNODE } from './runtimeHelpers'
 // import { CREATE_ELEMENT_VNODE } from './runtimeHelpers'
 
 export const enum NodeTypes {
@@ -83,7 +84,8 @@ interface ObjectProperty {
 
 export function createVNodeCall(context: any, tag: string, props?: any, children?: any): VNodeCall {
 	if (context) {
-		// context.helper(CREATE_ELEMENT_VNODE)
+		//辅助函数传递参数(生成代码时使用的函数名)
+		context.helper(CREATE_ELEMENT_VNODE)
 	}
 
 	return {

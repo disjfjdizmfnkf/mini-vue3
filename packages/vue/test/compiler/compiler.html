@@ -18,31 +18,22 @@
   const template = `<div> hello world </div>`
 
   // 生成 render 函数
-  const renderFn = compile(template)
+  const { code } = compile(template)
+  console.log(code)
 
+  const renderFn = new Function(code)()
+  console.log(renderFn)
 
-  const ast = {
-    'type': 0,
-    'children': [{
-      'type': 1,
-      'tag': 'div',
-      'tagType': 0,
-      'props': [],
-      'children': [{ 'type': 2, 'content': ' hello world ' }],
-    }],
-    'loc': {},
+  // 创建组件
+  const component = {
+    render: renderFn
   }
 
-  // // 创建组件
-  // const component = {
-  //   render: renderFn
-  // }
-  //
-  // // 通过 h 函数，生成 vnode
-  // const vnode = h(component)
-  //
-  // // 通过 render 函数渲染组件
-  // render(vnode, document.querySelector('#app'))
+  // 通过 h 函数，生成 vnode
+  const vnode = h(component)
+
+  // 通过 render 函数渲染组件
+  render(vnode, document.querySelector('#app'))
 </script>
 
 </html>

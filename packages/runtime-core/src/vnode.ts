@@ -39,6 +39,8 @@ export function createVNode(type: any, props: any, children: any): VNode {
   return createBaseVNode(type, props, children, shapeFlag)
 }
 
+export { createVNode as createElementVNode }  // 为了和vue2的createElement保持一致 在编译时使用
+
 function createBaseVNode(type: any, props: any, children: any, shapeFlags: ShapeFlags | number): VNode {
   const vnode: VNode = {
     __v_isVNode: true,
@@ -47,7 +49,7 @@ function createBaseVNode(type: any, props: any, children: any, shapeFlags: Shape
     props,
     children,
     shapeFlag: shapeFlags,
-    key: props?.key || null
+    key: props?.key || null,
   }
   normalizeChildren(vnode, children)
   return vnode

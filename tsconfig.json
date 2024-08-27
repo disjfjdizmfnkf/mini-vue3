@@ -21,6 +21,8 @@
     "strict": true,
     // 不允许没有使用的局部变量
     "noUnusedLocals": true,
+    // 允许使用隐式的 any 类型
+    "noImplicitAny": false,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
