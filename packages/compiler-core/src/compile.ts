@@ -13,11 +13,14 @@ import { generate } from './codegen'
 export function baseCompiler(template: string, options = {}) {
   const ast = baseParse(template)
 
+  console.log(JSON.stringify(ast))
+
   transform(ast, extend(options, {
     nodeTransforms: [transformElement, transformText],
   }))
-  // console.log(ast)
 
-  // console.log(JSON.stringify(ast))
+  // JSON.stringify(ast) 会将ast对象转换为字符串 (函数 循环引用 Symbol)会转化为空
+  console.log(ast)
+
   return generate(ast)
 }

@@ -35,6 +35,11 @@ export interface TransformContext {
    * 转化方法集合
    */
   nodeTransforms: any[]
+
+  /**
+   * 替换节点
+   */
+  replaceNode(node): void
 }
 
 
@@ -56,7 +61,9 @@ function createTransformContext(root: any, { nodeTransforms = [] }) {
       context.helpers.set(name, count + 1)
       return name
     },
-
+    replaceNode(node) {
+      context.parent!.children[context.childIndex] = context.currentNode = node
+    },
   }
   return context
 }
@@ -129,7 +136,7 @@ export function traverseNode(node: any, context: TransformContext) {
     case NodeTypes.ROOT:
       traverseChildren(node, context)
       break
-    // 处理插值表达式 {{}}
+    // 插值表达式 {{}}
     case NodeTypes.INTERPOLATION:
       context.helper(TO_DISPLAY_STRING)
       break
@@ -169,7 +176,7 @@ function createRootCodegen(root: any) {
 
   // 仅支持单个的根节点
   if (children.length === 1) {
-const  child = children[0]
+    const child = children[0]
     if (isSingleElementRoot(root, child) && child.codegenNode) {
       //当根节点只有一个子节点时，这个子节点的 codegenNode 会直接作为根节点的
       // codegenNode，不需要额外的提升或处理。

@@ -26,11 +26,11 @@ function createParserContext(content: string): ParserContext {
  * 生成root节点，将children挂载到root节点的children上
  * @param children
  */
-export function createRoot(children: any[]) {
+export function createRoot(children) {
   return {
     type: NodeTypes.ROOT,
     children,
-    loc: {}
+    loc: {},
   }
 }
 
@@ -51,8 +51,8 @@ export function baseParse(content: string) {
  * @param context
  * @param ancestors
  */
-function parserChildren(context: ParserContext, ancestors: any[]) {
-  const nodes = <any>[]
+function parserChildren(context: ParserContext, ancestors) {
+  const nodes = []
 
   // 解析各种node节点(token)，之后会将其加入栈中
   while (!isEnd(context, ancestors)) {
@@ -61,6 +61,7 @@ function parserChildren(context: ParserContext, ancestors: any[]) {
     let node
     if (startsWith(s, '{{')) {
       // TODO: 解析插值表达式 {{
+      node = parseInterpolation(context)
     } else if (s[0] === '<') {
       // TODO: 一个标签的开始
       if (/[a-z]/i.test(s[1])) {
@@ -73,16 +74,42 @@ function parserChildren(context: ParserContext, ancestors: any[]) {
     if (!node) {
       node = parseText(context)
     }
-
     pushNode(nodes, node)
-
-    return nodes
   }
+
+  return nodes
 }
 
 function pushNode(nodes: any[], node: any) {
   if (node) {
     nodes.push(node)
+  }
+}
+
+/**
+ * 解析插值表达式
+ * @param context
+ */
+function parseInterpolation(context: ParserContext) {
+  const [open, close] = ['{{', '}}']
+
+  advanceBy(context, open.length)
+
+  // 获取插值表达式中间的值
+  const closeIndex = context.source.indexOf(close, open.length)
+  const preTrimContent = parseTextData(context, closeIndex)
+  const content = preTrimContent.trim()
+
+  advanceBy(context, close.length)
+
+  // 返回一个插值表达式节点
+  return {
+    type: NodeTypes.INTERPOLATION,
+    content: {
+      type: NodeTypes.SIMPLE_EXPRESSION,
+      isStatic: false,
+      content,
+    },
   }
 }
 
@@ -111,7 +138,6 @@ function parseElement(context: ParserContext, ancestors: any[]) {
   // 整个标签处理完成
   return element
 }
-
 
 /**
  * 解析标签
@@ -147,6 +173,7 @@ function parseTag(context: any, type: TagType): any {
   }
 }
 
+
 function parseText(context: ParserContext) {
   // 普通文本的结束标记
   const endTokens = ['<', '{{']
@@ -167,13 +194,15 @@ function parseText(context: ParserContext) {
 
   return {
     type: NodeTypes.TEXT,
-    content
+    content,
   }
 }
 
 
 /**
  * 将text切割出来并返回，移动游标
+ * @param context
+ * @param length text长度
  */
 function parseTextData(context: ParserContext, length: number): string {
   // 获取text
