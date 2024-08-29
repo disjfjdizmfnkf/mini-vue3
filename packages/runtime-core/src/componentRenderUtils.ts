@@ -3,13 +3,14 @@ import { ShapeFlags } from '../../shared/src/shapeFlags'
 
 
 export function renderComponentRoot(instance: any) {
-  const { vnode, render, data } = instance
+  const { vnode, render, data = {} } = instance
 
   let result
 
   try {
     if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-      result = normalizeVNode(render!.call(data))
+      // call方法传入的第一个参数是this指向不会作为函数的实际参数传入
+      result = normalizeVNode(render!.call(data, data))  // 传入第二个data作为context
     }
   } catch (error) {
     console.error(error)

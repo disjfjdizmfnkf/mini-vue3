@@ -1,13 +1,10 @@
 import { ElementTypes, NodeTypes } from './ast'
 
-
-const enum TagType {
-  Start,
-  End
-}
-
-
+/**
+ * 解析器上下文
+ */
 export interface ParserContext {
+  // 模板数据源
   source: string
 }
 
@@ -15,35 +12,44 @@ export interface ParserContext {
  * 将content转换为parserContext，content内容  context语境
  * @param content 原始模板字符串
  */
-function createParserContext(content: string): ParserContext {
-  return {
-    // 解析模板内容到parserContext的属性中
-    source: content,
-  }
+const enum TagType {
+  Start,
+  End
 }
 
 /**
- * 生成root节点，将children挂载到root节点的children上
- * @param children
+ * 生成 root 节点
  */
 export function createRoot(children) {
   return {
     type: NodeTypes.ROOT,
     children,
+    // loc：位置，这个属性并不影响渲染，但是它必须存在，否则会报错。所以我们给了他一个 {}
     loc: {},
   }
 }
 
-// 将content转换为ast
+/**
+ * 基础的 parse 方法，生成 AST
+ * @param content tempalte 模板
+ * @returns
+ */
 export function baseParse(content: string) {
   // 包含content模板字符串及其解析状态对象
   const context = createParserContext(content)
-
-  const children = parserChildren(context, [])
-
+  const children = parseChildren(context, [])
   return createRoot(children)
 }
 
+/**
+ * 创建解析器上下文
+ */
+function createParserContext(content: string): ParserContext {
+  // 合成 context 上下文对象
+  return {
+    source: content,
+  }
+}
 
 /**
  * 解析context中前面的el的子节点（可能有也可能没有子节点）
@@ -51,19 +57,24 @@ export function baseParse(content: string) {
  * @param context
  * @param ancestors
  */
-function parserChildren(context: ParserContext, ancestors) {
-  const nodes = []
+function parseChildren(context: ParserContext, ancestors: any[]) {
+  const nodes = <any>[]
 
   // 解析各种node节点(token)，之后会将其加入栈中
   while (!isEnd(context, ancestors)) {
+    /**
+     * 模板源
+     */
     const s = context.source
-
+    // 定义 node 节点
     let node
+
     if (startsWith(s, '{{')) {
-      // TODO: 解析插值表达式 {{
       node = parseInterpolation(context)
-    } else if (s[0] === '<') {
-      // TODO: 一个标签的开始
+    }
+    // 一个标签的开始
+    else if (s[0] === '<') {
+      // 以 < 开始，后面跟a-z 表示，这是一个标签的开始
       if (/[a-z]/i.test(s[1])) {
         // 处理各种Element,
         node = parseElement(context, ancestors)
@@ -74,23 +85,19 @@ function parserChildren(context: ParserContext, ancestors) {
     if (!node) {
       node = parseText(context)
     }
+
     pushNode(nodes, node)
   }
 
   return nodes
 }
 
-function pushNode(nodes: any[], node: any) {
-  if (node) {
-    nodes.push(node)
-  }
-}
-
 /**
- * 解析插值表达式
- * @param context
+ * 解析插值表达式 {{ xxx }}
  */
 function parseInterpolation(context: ParserContext) {
+  // open = {{
+  // close = }}
   const [open, close] = ['{{', '}}']
 
   advanceBy(context, open.length)
@@ -102,7 +109,6 @@ function parseInterpolation(context: ParserContext) {
 
   advanceBy(context, close.length)
 
-  // 返回一个插值表达式节点
   return {
     type: NodeTypes.INTERPOLATION,
     content: {
@@ -114,23 +120,38 @@ function parseInterpolation(context: ParserContext) {
 }
 
 /**
- * 解析Element,包括开始标签和结束标签
- * @param context
- * @param ancestors
+ * 判断是否为结束节点
  */
-function parseElement(context: ParserContext, ancestors: any[]) {
+function isEnd(context: ParserContext, ancestors): boolean {
+  const s = context.source
+
+  // 解析是否为结束标签
+  if (startsWith(s, '</')) {
+    for (let i = ancestors.length - 1; i >= 0; --i) {
+      if (startsWithEndTagOpen(s, ancestors[i].tag)) {
+        return true
+      }
+    }
+  }
+  return !s
+}
+
+/**
+ * 解析 Element 元素。例如：<div>
+ */
+function parseElement(context: ParserContext, ancestors) {
   // -- 先处理开始标签 --
   const element = parseTag(context, TagType.Start)
 
-  //  使用ancestor存储当前节点,传入parseChildren中作为父节点
+  //  -- 处理子节点 --
   ancestors.push(element)
-  // parseChildren中会再次调用parseElement，递归解析el的子节点
-  const children = parserChildren(context, ancestors)
+  // 递归触发 parseChildren
+  const children = parseChildren(context, ancestors)
   ancestors.pop()
   // 为子节点赋值
   element.children = children
 
-  //  判断这个el的结束标签
+  //  -- 最后处理结束标签 --
   if (startsWithEndTagOpen(context.source, element.tag)) {
     parseTag(context, TagType.End)
   }
@@ -145,15 +166,15 @@ function parseElement(context: ParserContext, ancestors: any[]) {
 function parseTag(context: any, type: TagType): any {
   // 获取标签名
   const match: any = /^<\/?([a-z][^\r\n\t\f />]*)/i.exec(context.source)
-
+  // 标签名字
   const tag = match[1]
 
   // 对模板进行解析处理
   advanceBy(context, match[0].length)
 
   // 属性与指令处理
-  // advanceSpaces(context)
-  // let props = parseAttributes(context, type)
+  advanceSpaces(context)
+  let props = parseAttributes(context, type)
 
   // 处理标签结束部分(自闭合标签和非自闭合标签)
   // 判断是否为自闭合标签，例如 <img /> 注意此时游标已经移动了
@@ -173,11 +194,130 @@ function parseTag(context: any, type: TagType): any {
   }
 }
 
+/**
+ * 解析属性与指令
+ */
+function parseAttributes(context, type) {
+  // 解析之后的 props 数组
+  const props: any = []
+  // 属性名数组
+  const attributeNames = new Set<string>()
 
+  // 循环解析，直到解析到标签结束（'>' || '/>'）为止
+  while (
+    context.source.length > 0 &&
+    !startsWith(context.source, '>') &&
+    !startsWith(context.source, '/>')
+    ) {
+    // 具体某一条属性的处理
+    const attr = parseAttribute(context, attributeNames)
+    // 添加属性
+    if (type === TagType.Start) {
+      props.push(attr)
+    }
+    advanceSpaces(context)
+  }
+  return props
+}
+
+/**
+ * 处理指定指令，返回指令节点
+ */
+function parseAttribute(context: ParserContext, nameSet: Set<string>) {
+  // 获取属性名称。例如：v-if
+  const match = /^[^\t\r\n\f />][^\t\r\n\f />=]*/.exec(context.source)!
+  const name = match[0]
+  // 添加当前的处理属性
+  nameSet.add(name)
+
+  advanceBy(context, name.length)
+
+  // 获取属性值。
+  let value: any = undefined
+
+  // 解析模板，并拿到对应的属性值节点
+  if (/^[\t\r\n\f ]*=/.test(context.source)) {
+    advanceSpaces(context)
+    advanceBy(context, 1)
+    advanceSpaces(context)
+    value = parseAttributeValue(context)
+  }
+
+  // 针对 v- 的指令处理
+  if (/^(v-[A-Za-z0-9-]|:|\.|@|#)/.test(name)) {
+    // 获取指令名称
+    const match =
+      /(?:^v-([a-z0-9-]+))?(?:(?::|^\.|^@|^#)(\[[^\]]+\]|[^\.]+))?(.+)?$/i.exec(
+        name,
+      )!
+
+    // 指令名。v-if 则获取 if
+    let dirName = match[1]
+    // TODO：指令参数  v-bind:arg
+    // let arg: any
+
+    // TODO：指令修饰符  v-on:click.modifiers
+    // const modifiers = match[3] ? match[3].slice(1).split('.') : []
+
+    return {
+      type: NodeTypes.DIRECTIVE,
+      name: dirName,
+      exp: value && {
+        type: NodeTypes.SIMPLE_EXPRESSION,
+        content: value.content,
+        isStatic: false,
+        loc: value.loc,
+      },
+      arg: undefined,
+      modifiers: undefined,
+      loc: {},
+    }
+  }
+
+  return {
+    type: NodeTypes.ATTRIBUTE,
+    name,
+    value: value && {
+      type: NodeTypes.TEXT,
+      content: value.content,
+      loc: value.loc,
+    },
+    loc: {},
+  }
+}
+
+/**
+ * 获取属性（attr）的 value
+ */
+function parseAttributeValue(context: ParserContext) {
+  let content = ''
+
+  // 判断是单引号还是双引号
+  const quote = context.source[0]
+  const isQuoted = quote === `"` || quote === `'`
+  // 引号处理
+  if (isQuoted) {
+    advanceBy(context, 1)
+    // 获取结束的 index
+    const endIndex = context.source.indexOf(quote)
+    // 获取指令的值。例如：v-if="isShow"，则值为 isShow
+    if (endIndex === -1) {
+      content = parseTextData(context, context.source.length)
+    } else {
+      content = parseTextData(context, endIndex)
+      advanceBy(context, 1)
+    }
+  }
+
+  return { content, isQuoted, loc: {} }
+}
+
+/**
+ * 解析文本。
+ */
 function parseText(context: ParserContext) {
   // 普通文本的结束标记
   const endTokens = ['<', '{{']
-
   // 计算普通文本结束的位置
   let endIndex = context.source.length
 
@@ -194,15 +334,19 @@ function parseText(context: ParserContext) {
 
   return {
     type: NodeTypes.TEXT,
-    content,
+    content
   }
 }
 
+/**
+ * 是否以指定文本开头
+ */
+function startsWith(source: string, searchString: string): boolean {
+  return source.startsWith(searchString)
+}
 
 /**
  * 将text切割出来并返回，移动游标
- * @param context
- * @param length text长度
  */
 function parseTextData(context: ParserContext, length: number): string {
   // 获取text
@@ -213,6 +357,15 @@ function parseTextData(context: ParserContext, length: number): string {
   return rawText
 }
 
+/**
+ * 前进非固定步数
+ */
+function advanceSpaces(context: ParserContext): void {
+  const match = /^[\t\r\n\f ]+/.exec(context.source)
+  if (match) {
+    advanceBy(context, match[0].length)
+  }
+}
 
 /**
  * 移动游标到下一个解析位置 | 帮助有限状态机移动到下一个开始状态
@@ -226,31 +379,15 @@ function advanceBy(context: ParserContext, numberOfCharacters: number): void {
   context.source = source.slice(numberOfCharacters)
 }
 
-
 /**
- * 判断当前标签是否是一个匹配父标签的结束标签，可以应对标签中含有子标签的情况
- *
- * 简单来说，是判断栈中的一个标签（和它的子标签）是否结束
- * @param context
- * @param ancestors 存储所遇到的所有父级节点的数组
+ * nodes.push(node)
  */
-function isEnd(context: ParserContext, ancestors: any[]) {
-  const s = context.source
-
-  // 遇到一个结束标签
-  if (startsWith(s, '</')) {
-    for (let i = ancestors.length - 1; i >= 0; i--) {
-      // 这个结束标签和当前的父标签匹配
-      if (startsWithEndTagOpen(s, ancestors[i].tag)) {
-        return true
-      }
-    }
-  }
-  return !s
+function pushNode(nodes, node): void {
+  nodes.push(node)
 }
 
 /**
- * 判断当前是否为《标签结束的开始》。比如 </div> 就是 div 标签结束的开始
+ * 判断当前是否为《标签结束的开始》		。比如 </div> 就是 div 标签结束的开始
  * @param source 模板。例如：</div>
  * @param tag 标签。例如：div
  * @returns
@@ -261,8 +398,4 @@ function startsWithEndTagOpen(source: string, tag: string): boolean {
     source.slice(2, 2 + tag.length).toLowerCase() === tag.toLowerCase() &&
     /[\t\r\n\f />]/.test(source[2 + tag.length] || '>')
   )
-}
-
-function startsWith(source: string, searchString: string): boolean {
-  return source.startsWith(searchString)
 }

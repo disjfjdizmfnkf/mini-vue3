@@ -1,25 +1,31 @@
-import { baseParse } from './parse'
 import { extend } from '@vue/shared'
+import { generate } from './codegen'
+import { baseParse } from './parse'
+import { transform } from './transform'
 import { transformElement } from './transforms/transformElement'
 import { transformText } from './transforms/transformText'
-import { transform } from './transform'
-import { generate } from './codegen'
+import { transformIf } from './transforms/vIf'
 
-/**
- *
- * @param template
- * @param options
- */
-export function baseCompiler(template: string, options = {}) {
-  const ast = baseParse(template)
+export function baseCompile(template: string, options = {}) {
+  /**
+   * template.trim() 简单处理两侧空格，比如：
+   * template: `
+      <div>
+        hello world,
+          <h1 v-if="isShow">
+          {{ msg }}
+        </h1>
+      </div>
+      `
+   */
+  const ast = baseParse(template.trim())
 
-  console.log(JSON.stringify(ast))
-
-  transform(ast, extend(options, {
-    nodeTransforms: [transformElement, transformText],
-  }))
-
-  // JSON.stringify(ast) 会将ast对象转换为字符串 (函数 循环引用 Symbol)会转化为空
+  transform(
+    ast,
+    extend(options, {
+      nodeTransforms: [transformElement, transformText, transformIf]
+    })
+  )
   console.log(ast)
 
   return generate(ast)
