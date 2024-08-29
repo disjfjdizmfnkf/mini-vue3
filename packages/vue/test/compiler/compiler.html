@@ -18,11 +18,7 @@
   const template = `<div> hello world </div>`
 
   // 生成 render 函数
-  const { code } = compile(template)
-  console.log(code)
-
-  const renderFn = new Function(code)()
-  console.log(renderFn)
+  const renderFn = compile(template)
 
   // 创建组件
   const component = {
