@@ -5,6 +5,7 @@ import { normalizeVNode, renderComponentRoot } from './componentRenderUtils'
 import { createComponentInstance, setupComponent } from './component'
 import { ReactiveEffect } from '../../reactivity/src/effect'
 import { queuePreFlushCb } from './scheduler'
+import { createAppAPI } from './apiCreateApp'
 
 export interface RendererOptions {
   patchProp(el: Element, key: string, prevValue: any, nextValue: any): void
@@ -616,6 +617,7 @@ function baseCreateRenderer(options: RendererOptions): any {
   }
   return {
     render,
+    createApp: createAppAPI(render)
   }
 
 }
